@@ -10,8 +10,11 @@ import redis.asyncio as redis
 from arq import create_pool
 from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, FastAPI
+from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from ..api.dependencies import get_current_superuser
 from ..core.utils.rate_limit import rate_limiter
@@ -247,4 +250,39 @@ def create_application(
 
             application.include_router(docs_router)
 
+    # --- Application handlers ---
+    application.add_exception_handler(HTTPException, http_error_handler)
+    application.add_exception_handler(RequestValidationError, http422_error_handler)
+
     return application
+
+
+async def http_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Custom error handler for HTTP exceptions."""
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "message": exc.detail,
+                "status_code": exc.status_code,
+                "status": "error",
+                "errors": [str(exc)],
+            },
+        )
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error", "errors": [str(exc)], "status_code": 500, "status": "error"},
+    )
+
+
+async def http422_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Custom error handler for 422 Unprocessable Entity exceptions."""
+    if isinstance(exc, RequestValidationError):
+        return JSONResponse(
+            status_code=422,
+            content={"message": "Validation Error", "errors": exc.errors(), "status_code": 422, "status": "error"},
+        )
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error", "errors": [str(exc)], "status_code": 500, "status": "error"},
+    )
