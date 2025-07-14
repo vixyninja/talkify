@@ -101,6 +101,6 @@ async def rate_limiter_dependency(
         user_id = request.client.host if request.client else "unknown"
         limit, period = DEFAULT_LIMIT, DEFAULT_PERIOD
 
-    is_limited = await rate_limiter.is_rate_limited(db=db, user_id=user_id, path=path, limit=limit, period=period) # type: ignore
+    is_limited = await rate_limiter.is_rate_limited(db=db, user_id=user_id, path=path, limit=limit, period=period)  # type: ignore
     if is_limited:
         raise RateLimitException("Rate limit exceeded.")

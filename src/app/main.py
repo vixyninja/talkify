@@ -10,7 +10,6 @@ from .core.setup import create_application, lifespan_factory
 
 admin = create_admin_interface()
 
-
 @asynccontextmanager
 async def lifespan_with_admin(app: FastAPI) -> AsyncGenerator[None, None]:
     """Custom lifespan that includes admin initialization."""

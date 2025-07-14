@@ -4,6 +4,8 @@ from typing import Any
 
 import anyio
 import fastapi
+import fastapi.middleware
+import fastapi.middleware.cors
 import redis.asyncio as redis
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -18,6 +20,7 @@ from ..models import *  # noqa: F403
 from .config import (
     AppSettings,
     ClientSideCacheSettings,
+    CORSSettings,
     DatabaseSettings,
     EnvironmentOption,
     EnvironmentSettings,
@@ -70,7 +73,7 @@ async def close_redis_rate_limit_pool() -> None:
 
 # -------------- application --------------
 async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
-    limiter = anyio.to_thread.current_default_thread_limiter() # type: ignore
+    limiter = anyio.to_thread.current_default_thread_limiter()  # type: ignore
     limiter.total_tokens = number_of_tokens
 
 
@@ -203,9 +206,21 @@ def create_application(
     application = FastAPI(lifespan=lifespan, **kwargs)
     application.include_router(router)
 
+    # --- Client-side cache middleware ---
     if isinstance(settings, ClientSideCacheSettings):
-        application.add_middleware(ClientCacheMiddleware, max_age=settings.CLIENT_CACHE_MAX_AGE) # type: ignore
+        application.add_middleware(ClientCacheMiddleware, max_age=settings.CLIENT_CACHE_MAX_AGE)  # type: ignore
 
+    # --- CORS middleware ---
+    if isinstance(settings, CORSSettings):
+        application.add_middleware(
+            fastapi.middleware.cors.CORSMiddleware,
+            allow_origins=settings.CORS_ORIGINS,
+            allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+            allow_methods=settings.CORS_ALLOW_METHODS,
+            allow_headers=settings.CORS_ALLOW_HEADERS,
+        )
+
+    # --- Documentation router in `Local`, `Staging` and `Production`  environments ---
     if isinstance(settings, EnvironmentSettings):
         if settings.ENVIRONMENT != EnvironmentOption.PRODUCTION:
             docs_router = APIRouter()
@@ -224,6 +239,7 @@ def create_application(
             async def openapi() -> dict[str, Any]:
                 out: dict = get_openapi(title=application.title, version=application.version, routes=application.routes)
                 return out
+
             @docs_router.get("/health", include_in_schema=False)
             async def health_check() -> dict[str, str]:
                 """Health check endpoint."""

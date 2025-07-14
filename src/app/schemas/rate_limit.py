@@ -49,7 +49,7 @@ class RateLimitUpdate(BaseModel):
 
     @field_validator("path")
     def validate_and_sanitize_path(cls, v: str) -> str:
-        return sanitize_path(v) if v is not None else None # type: ignore
+        return sanitize_path(v) if v is not None else None  # type: ignore
 
 
 class RateLimitUpdateInternal(RateLimitUpdate):

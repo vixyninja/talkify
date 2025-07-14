@@ -127,6 +127,13 @@ class EnvironmentSettings(BaseSettings):
     ENVIRONMENT: EnvironmentOption = config("ENVIRONMENT", default=EnvironmentOption.LOCAL)
 
 
+class CORSSettings(BaseSettings):
+    CORS_ORIGINS: list[str] = config("CORS_ORIGINS", default=["*"])
+    CORS_ALLOW_CREDENTIALS: bool = config("CORS_ALLOW_CREDENTIALS", default=True)
+    CORS_ALLOW_METHODS: list[str] = config("CORS_ALLOW_METHODS", default=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    CORS_ALLOW_HEADERS: list[str] = config("CORS_ALLOW_HEADERS", default=["*"])
+
+
 class Settings(
     AppSettings,
     PostgresSettings,
@@ -140,6 +147,7 @@ class Settings(
     DefaultRateLimitSettings,
     CRUDAdminSettings,
     EnvironmentSettings,
+    CORSSettings,
 ):
     pass
 
