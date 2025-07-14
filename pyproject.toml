@@ -5,7 +5,7 @@ description = "A chat application built with FastAPI"
 authors = [{ name = "vixyninja", email = "hhvy2003.dev@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = "~=3.11.0"
+requires-python = "~=3.11.13"
 dependencies = [
     "python-dotenv>=1.0.0",
     "pydantic[email]>=2.6.1",
@@ -108,7 +108,7 @@ dev = [
 ]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.11.13"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
