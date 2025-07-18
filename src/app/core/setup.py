@@ -1,5 +1,5 @@
+import contextlib
 from collections.abc import AsyncGenerator, Callable
-from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
 from typing import Any
 
 import anyio
@@ -19,7 +19,6 @@ from starlette.responses import JSONResponse
 from ..api.dependencies import get_current_superuser
 from ..core.utils.rate_limit import rate_limiter
 from ..middleware.client_cache_middleware import ClientCacheMiddleware
-from ..models import *  # noqa: F403
 from .config import (
     AppSettings,
     ClientSideCacheSettings,
@@ -81,7 +80,7 @@ async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
 
 
 def lifespan_factory(
-    settings: (
+    _settings: (
         DatabaseSettings
         | RedisCacheSettings
         | AppSettings
@@ -91,10 +90,10 @@ def lifespan_factory(
         | EnvironmentSettings
     ),
     create_tables_on_start: bool = True,
-) -> Callable[[FastAPI], _AsyncGeneratorContextManager[Any]]:
+) -> Callable[[FastAPI], contextlib._AsyncGeneratorContextManager[Any]]:
     """Factory to create a lifespan async context manager for a FastAPI app."""
 
-    @asynccontextmanager
+    @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator:
         from asyncio import Event
 
@@ -104,13 +103,13 @@ def lifespan_factory(
         await set_threadpool_tokens()
 
         try:
-            if isinstance(settings, RedisCacheSettings):
+            if isinstance(_settings, RedisCacheSettings):
                 await create_redis_cache_pool()
 
-            if isinstance(settings, RedisQueueSettings):
+            if isinstance(_settings, RedisQueueSettings):
                 await create_redis_queue_pool()
 
-            if isinstance(settings, RedisRateLimiterSettings):
+            if isinstance(_settings, RedisRateLimiterSettings):
                 await create_redis_rate_limit_pool()
 
             if create_tables_on_start:
@@ -121,13 +120,13 @@ def lifespan_factory(
             yield
 
         finally:
-            if isinstance(settings, RedisCacheSettings):
+            if isinstance(_settings, RedisCacheSettings):
                 await close_redis_cache_pool()
 
-            if isinstance(settings, RedisQueueSettings):
+            if isinstance(_settings, RedisQueueSettings):
                 await close_redis_queue_pool()
 
-            if isinstance(settings, RedisRateLimiterSettings):
+            if isinstance(_settings, RedisRateLimiterSettings):
                 await close_redis_rate_limit_pool()
 
     return lifespan
@@ -136,7 +135,8 @@ def lifespan_factory(
 # -------------- application --------------
 def create_application(
     router: APIRouter,
-    settings: (
+    lifespan: Callable[[FastAPI], contextlib._AsyncGeneratorContextManager[None]],
+    _settings: (
         DatabaseSettings
         | RedisCacheSettings
         | AppSettings
@@ -146,7 +146,6 @@ def create_application(
         | EnvironmentSettings
     ),
     create_tables_on_start: bool = True,
-    lifespan: Callable[[FastAPI], _AsyncGeneratorContextManager[Any]] | None = None,
     **kwargs: Any,
 ) -> FastAPI:
     """Creates and configures a FastAPI application based on the provided settings.
@@ -159,7 +158,7 @@ def create_application(
     router : APIRouter
         The APIRouter object containing the routes to be included in the FastAPI application.
 
-    settings
+    _settings
         An instance representing the settings for configuring the FastAPI application.
         It determines the configuration applied:
 
@@ -190,44 +189,47 @@ def create_application(
     based on the environment settings.
     """
     # --- before creating application ---
-    if isinstance(settings, AppSettings):
+    if isinstance(_settings, AppSettings):
         to_update = {
-            "title": settings.APP_NAME,
-            "description": settings.APP_DESCRIPTION,
-            "contact": {"name": settings.CONTACT_NAME, "email": settings.CONTACT_EMAIL},
-            "license_info": {"name": settings.LICENSE_NAME},
+            "title": _settings.APP_NAME,
+            "description": _settings.APP_DESCRIPTION,
+            "contact": {"name": _settings.CONTACT_NAME, "email": _settings.CONTACT_EMAIL},
+            "license_info": {"name": _settings.LICENSE_NAME},
         }
         kwargs.update(to_update)
 
-    if isinstance(settings, EnvironmentSettings):
+    if isinstance(_settings, EnvironmentSettings):
         kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
 
     # Use custom lifespan if provided, otherwise use default factory
     if lifespan is None:
-        lifespan = lifespan_factory(settings, create_tables_on_start=create_tables_on_start)
+        lifespan = lifespan_factory(_settings, create_tables_on_start=create_tables_on_start)
 
+    # Create instance of FastAPI with the provided lifespan and additional settings
     application = FastAPI(lifespan=lifespan, **kwargs)
+
+    # Include router in the application
     application.include_router(router)
 
     # --- Client-side cache middleware ---
-    if isinstance(settings, ClientSideCacheSettings):
-        application.add_middleware(ClientCacheMiddleware, max_age=settings.CLIENT_CACHE_MAX_AGE)  # type: ignore
+    if isinstance(_settings, ClientSideCacheSettings):
+        application.add_middleware(ClientCacheMiddleware, max_age=_settings.CLIENT_CACHE_MAX_AGE)  # type: ignore
 
     # --- CORS middleware ---
-    if isinstance(settings, CORSSettings):
+    if isinstance(_settings, CORSSettings):
         application.add_middleware(
             fastapi.middleware.cors.CORSMiddleware,
-            allow_origins=settings.CORS_ORIGINS,
-            allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-            allow_methods=settings.CORS_ALLOW_METHODS,
-            allow_headers=settings.CORS_ALLOW_HEADERS,
+            allow_origins=_settings.CORS_ORIGINS,
+            allow_credentials=_settings.CORS_ALLOW_CREDENTIALS,
+            allow_methods=_settings.CORS_ALLOW_METHODS,
+            allow_headers=_settings.CORS_ALLOW_HEADERS,
         )
 
     # --- Documentation router in `Local`, `Staging` and `Production`  environments ---
-    if isinstance(settings, EnvironmentSettings):
-        if settings.ENVIRONMENT != EnvironmentOption.PRODUCTION:
+    if isinstance(_settings, EnvironmentSettings):
+        if _settings.ENVIRONMENT != EnvironmentOption.PRODUCTION:
             docs_router = APIRouter()
-            if settings.ENVIRONMENT != EnvironmentOption.LOCAL:
+            if _settings.ENVIRONMENT != EnvironmentOption.LOCAL:
                 docs_router = APIRouter(dependencies=[Depends(get_current_superuser)])
 
             @docs_router.get("/docs", include_in_schema=False)
@@ -250,10 +252,9 @@ def create_application(
 
             application.include_router(docs_router)
 
-    # --- Application handlers ---
     application.add_exception_handler(HTTPException, http_error_handler)
-    application.add_exception_handler(RequestValidationError, http422_error_handler)
-
+    application.add_exception_handler(RequestValidationError, validation_error_handler)
+    application.add_exception_handler(Exception, internal_server_error_handler)
     return application
 
 
@@ -264,25 +265,53 @@ async def http_error_handler(_: Request, exc: Exception) -> JSONResponse:
             status_code=exc.status_code,
             content={
                 "message": exc.detail,
+                "errors": [str(exc)],
                 "status_code": exc.status_code,
                 "status": "error",
-                "errors": [str(exc)],
             },
         )
     return JSONResponse(
         status_code=500,
-        content={"message": "Internal Server Error", "errors": [str(exc)], "status_code": 500, "status": "error"},
+        content={
+            "message": "Internal Server Error",
+            "errors": [str(exc)],
+            "status_code": 500,
+            "status": "error",
+        },
     )
 
 
-async def http422_error_handler(_: Request, exc: Exception) -> JSONResponse:
-    """Custom error handler for 422 Unprocessable Entity exceptions."""
+async def validation_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Custom error handler for request validation errors."""
     if isinstance(exc, RequestValidationError):
         return JSONResponse(
             status_code=422,
-            content={"message": "Validation Error", "errors": exc.errors(), "status_code": 422, "status": "error"},
+            content={
+                "message": "Validation Error",
+                "errors": exc.errors(),
+                "status_code": 422,
+                "status": "error",
+            },
         )
     return JSONResponse(
         status_code=500,
-        content={"message": "Internal Server Error", "errors": [str(exc)], "status_code": 500, "status": "error"},
+        content={
+            "message": "Internal Server Error",
+            "errors": [str(exc)],
+            "status_code": 500,
+            "status": "error",
+        },
+    )
+
+
+async def internal_server_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Custom error handler for internal server errors."""
+    return JSONResponse(
+        status_code=500,
+        content={
+            "message": "Internal Server Error",
+            "errors": [str(exc)],
+            "status_code": 500,
+            "status": "error",
+        },
     )

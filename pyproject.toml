@@ -59,6 +59,18 @@ packages = ["src"]
 target-version = "py311"
 line-length = 120
 fix = true
+exclude = [
+    "src/tests",
+    "src/migrations",
+    "src/.venv",
+    "src/.git",
+    "src/.github",
+    "src/.idea",
+    "src/.vscode",
+    "src/pyproject.toml",
+    "src/README.md",
+]
+
 
 [tool.ruff.lint]
 select = [

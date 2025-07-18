@@ -12,13 +12,13 @@ admin = create_admin_interface()
 
 
 @asynccontextmanager
-async def lifespan_with_admin(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan_with_admin(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Custom lifespan that includes admin initialization."""
     # Get the default lifespan
     default_lifespan = lifespan_factory(settings)
 
     # Run the default lifespan initialization and our admin initialization
-    async with default_lifespan(app):
+    async with default_lifespan(_app):
         # Initialize admin interface if it exists
         if admin:
             # Initialize admin database and setup
@@ -27,8 +27,9 @@ async def lifespan_with_admin(app: FastAPI) -> AsyncGenerator[None, None]:
         yield
 
 
-app = create_application(router=router, settings=settings, lifespan=lifespan_with_admin)
+app = create_application(router=router, lifespan=lifespan_with_admin, _settings=settings)
 
 # Mount admin interface if enabled
 if admin:
+    print(settings.CRUD_ADMIN_MOUNT_PATH)
     app.mount(settings.CRUD_ADMIN_MOUNT_PATH, admin.app)

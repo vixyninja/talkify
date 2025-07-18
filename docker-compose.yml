@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build:
@@ -80,18 +78,18 @@ services:
   #     - web
 
   #-------- uncomment to create first superuser --------
-  # create_superuser:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   env_file:
-  #     - ./src/.env
-  #   depends_on:
-  #     - db
-  #     - web
-  #   command: python -m src.scripts.create_first_superuser
-  #   volumes:
-  #     - ./src:/code/src
+  create_superuser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./src/.env
+    depends_on:
+      - db
+      - web
+    command: python -m src.scripts.create_first_superuser
+    volumes:
+      - ./src:/code/src
 
   #-------- uncomment to create first tier --------
   # create_tier:
