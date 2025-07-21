@@ -60,13 +60,6 @@ class PostgresSettings(DatabaseSettings):
     POSTGRES_URL: str | None = config("POSTGRES_URL", default=None)
 
 
-class FirstUserSettings(BaseSettings):
-    ADMIN_NAME: str = config("ADMIN_NAME", default="admin")
-    ADMIN_EMAIL: str = config("ADMIN_EMAIL", default="admin@admin.com")
-    ADMIN_USERNAME: str = config("ADMIN_USERNAME", default="admin")
-    ADMIN_PASSWORD: str = config("ADMIN_PASSWORD", default="!Ch4ng3Th1sP4ssW0rd!")
-
-
 class TestSettings(BaseSettings): ...
 
 
@@ -83,27 +76,6 @@ class ClientSideCacheSettings(BaseSettings):
 class RedisQueueSettings(BaseSettings):
     REDIS_QUEUE_HOST: str = config("REDIS_QUEUE_HOST", default="localhost")
     REDIS_QUEUE_PORT: int = config("REDIS_QUEUE_PORT", default=6379)
-
-
-class CRUDAdminSettings(BaseSettings):
-    CRUD_ADMIN_ENABLED: bool = config("CRUD_ADMIN_ENABLED", default=True)
-    CRUD_ADMIN_MOUNT_PATH: str = config("CRUD_ADMIN_MOUNT_PATH", default="/admin")
-
-    CRUD_ADMIN_ALLOWED_IPS_LIST: list[str] | None = None
-    CRUD_ADMIN_ALLOWED_NETWORKS_LIST: list[str] | None = None
-    CRUD_ADMIN_MAX_SESSIONS: int = config("CRUD_ADMIN_MAX_SESSIONS", default=10)
-    CRUD_ADMIN_SESSION_TIMEOUT: int = config("CRUD_ADMIN_SESSION_TIMEOUT", default=1440)
-    SESSION_SECURE_COOKIES: bool = config("SESSION_SECURE_COOKIES", default=True)
-
-    CRUD_ADMIN_TRACK_EVENTS: bool = config("CRUD_ADMIN_TRACK_EVENTS", default=True)
-    CRUD_ADMIN_TRACK_SESSIONS: bool = config("CRUD_ADMIN_TRACK_SESSIONS", default=True)
-
-    CRUD_ADMIN_REDIS_ENABLED: bool = config("CRUD_ADMIN_REDIS_ENABLED", default=False)
-    CRUD_ADMIN_REDIS_HOST: str = config("CRUD_ADMIN_REDIS_HOST", default="localhost")
-    CRUD_ADMIN_REDIS_PORT: int = config("CRUD_ADMIN_REDIS_PORT", default=6379)
-    CRUD_ADMIN_REDIS_DB: int = config("CRUD_ADMIN_REDIS_DB", default=0)
-    CRUD_ADMIN_REDIS_PASSWORD: str | None = config("CRUD_ADMIN_REDIS_PASSWORD", default="None")
-    CRUD_ADMIN_REDIS_SSL: bool = config("CRUD_ADMIN_REDIS_SSL", default=False)
 
 
 class EnvironmentOption(Enum):
@@ -127,12 +99,10 @@ class Settings(
     AppSettings,
     PostgresSettings,
     CryptSettings,
-    FirstUserSettings,
     TestSettings,
     RedisCacheSettings,
     ClientSideCacheSettings,
     RedisQueueSettings,
-    CRUDAdminSettings,
     EnvironmentSettings,
     CORSSettings,
 ):

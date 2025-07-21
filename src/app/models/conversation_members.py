@@ -27,7 +27,10 @@ class ConversationMembers(Base):
         DateTime(timezone=True), default=datetime.now(UTC), server_default=text("current_timestamp(0)")
     )
     updated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=datetime.now(UTC), onupdate=datetime.now(UTC), server_default=text("current_timestamp(0)")
+        DateTime(timezone=True),
+        default=datetime.now(UTC),
+        onupdate=datetime.now(UTC),
+        server_default=text("current_timestamp(0)"),
     )
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
