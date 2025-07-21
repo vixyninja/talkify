@@ -43,12 +43,12 @@ async def create_tables() -> None:
 # -------------- cache --------------
 async def create_redis_cache_pool() -> None:
     cache.pool = redis.ConnectionPool.from_url(settings.REDIS_CACHE_URL)
-    cache.client = redis.Redis.from_pool(cache.pool)  # type: ignore
+    cache.client = redis.Redis.from_pool(cache.pool)
 
 
 async def close_redis_cache_pool() -> None:
     if cache.client is not None:
-        await cache.client.aclose()  # type: ignore
+        await cache.client.aclose()
 
 
 # -------------- queue --------------
@@ -58,7 +58,7 @@ async def create_redis_queue_pool() -> None:
 
 async def close_redis_queue_pool() -> None:
     if queue.pool is not None:
-        await queue.pool.aclose()  # type: ignore
+        await queue.pool.aclose()
 
 
 # -------------- application --------------

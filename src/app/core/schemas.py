@@ -17,7 +17,7 @@ class UUIDSchema(BaseModel):
 
 
 class TimestampSchema(BaseModel):
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime | None = Field(default=None)
 
     @field_serializer("created_at")
@@ -50,6 +50,7 @@ class PersistentDeletion(BaseModel):
 # -------------- token --------------
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
 
 
@@ -63,7 +64,7 @@ class TokenBlacklistBase(BaseModel):
 
 
 class TokenBlacklistRead(TokenBlacklistBase):
-    id: int
+    id: uuid_pkg.UUID = Field(default_factory=uuid_pkg.uuid4)
 
 
 class TokenBlacklistCreate(TokenBlacklistBase):

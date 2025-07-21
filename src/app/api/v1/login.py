@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.config import settings
 from ...core.db.database import async_get_db
 from ...core.exceptions.http_exceptions import UnauthorizedException
 from ...core.schemas import Token
@@ -23,7 +22,7 @@ router = APIRouter(tags=["login"])
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
-    response: Response,
+    _: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(async_get_db)],
 ) -> dict[str, str]:
@@ -33,15 +32,9 @@ async def login_for_access_token(
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = await create_access_token(data={"sub": user["username"]}, expires_delta=access_token_expires)
-
     refresh_token = await create_refresh_token(data={"sub": user["username"]})
-    max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
-    response.set_cookie(
-        key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="lax", max_age=max_age
-    )
-
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
 @router.post("/refresh")
