@@ -36,6 +36,7 @@ class UserCreate(UserBase):
 
 
 class UserCreateInternal(UserBase):
+    id: uuid_pkg.UUID = uuid_pkg.uuid4()
     hashed_password: str
 
 

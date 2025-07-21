@@ -10,9 +10,11 @@ from ..core.db.database import Base
 
 class Users(Base):
     __tablename__ = "users"
-
+    
     # Primary key
-    id: Mapped[uuid_pkg.UUID] = mapped_column(UUID, primary_key=True, server_default=text("gen_random_uuid()"))
+    id: Mapped[uuid_pkg.UUID] = mapped_column(
+        UUID, primary_key=True, server_default=text("gen_random_uuid()")
+    )
 
     # Business logic fields
     name: Mapped[str] = mapped_column(String(30))
@@ -21,12 +23,13 @@ class Users(Base):
     hashed_password: Mapped[str] = mapped_column(String)
     profile_image_url: Mapped[str] = mapped_column(String, default="https://profileimageurl.com")
 
+
     # Timestamp and soft delete fields
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.now(UTC), server_default=text("current_timestamp(0)")
+        DateTime(timezone=True), default=datetime.now(UTC), server_default=text("current_timestamp(0)")
     )
     updated_at: Mapped[datetime | None] = mapped_column(
-        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC), server_default=text("current_timestamp(0)")
+        DateTime(timezone=True), default=datetime.now(UTC), onupdate=datetime.now(UTC), server_default=text("current_timestamp(0)")
     )
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
