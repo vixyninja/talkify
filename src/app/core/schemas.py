@@ -73,3 +73,7 @@ class TokenBlacklistCreate(TokenBlacklistBase):
 
 class TokenBlacklistUpdate(TokenBlacklistBase):
     pass
+
+
+class TokenLogoutRequest(BaseModel):
+    refresh_token: str

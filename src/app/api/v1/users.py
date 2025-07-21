@@ -135,15 +135,3 @@ async def erase_db_user(
     return {"message": "User deleted from the database"}
 
 
-@router.get("/user/{username}/rate_limits", dependencies=[Depends(get_current_superuser)])
-async def read_user_rate_limits(
-    request: Request, username: str, db: Annotated[AsyncSession, Depends(async_get_db)]
-) -> dict[str, Any]:
-    db_user = await crud_users.get(db=db, username=username, schema_to_select=UserRead)
-    if db_user is None:
-        raise NotFoundException("User not found")
-
-    db_user = cast(UserRead, db_user)
-    user_dict = db_user.model_dump()
-
-    return user_dict

@@ -146,6 +146,10 @@ async def blacklist_tokens(access_token: str, refresh_token: str, db: AsyncSessi
         Database session for performing database operations.
     """
     for token in [access_token, refresh_token]:
+        is_blacklisted = await crud_token_blacklist.exists(db, token=token)
+        if is_blacklisted:
+            continue
+
         payload = jwt.decode(token, SECRET_KEY.get_secret_value(), algorithms=[ALGORITHM])
         exp_timestamp = payload.get("exp")
         if exp_timestamp is not None:
@@ -154,6 +158,17 @@ async def blacklist_tokens(access_token: str, refresh_token: str, db: AsyncSessi
 
 
 async def blacklist_token(token: str, db: AsyncSession) -> None:
+    """Blacklist a single token.
+    Parameters
+    ----------
+    token: str
+        The token to blacklist.
+    db: AsyncSession
+        Database session for performing database operations.
+    """
+    is_blacklisted = await crud_token_blacklist.exists(db, token=token)
+    if is_blacklisted:
+        return 
     payload = jwt.decode(token, SECRET_KEY.get_secret_value(), algorithms=[ALGORITHM])
     exp_timestamp = payload.get("exp")
     if exp_timestamp is not None:
