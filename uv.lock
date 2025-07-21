@@ -920,7 +920,7 @@ requires-dist = [
     { name = "redis", specifier = ">=5.0.1" },
     { name = "ruff", specifier = ">=0.11.13" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.25" },
+    { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "sqlalchemy-utils", specifier = ">=0.41.1" },
     { name = "types-redis", marker = "extra == 'dev'", specifier = ">=4.6.0" },
     { name = "uuid", specifier = ">=1.30" },

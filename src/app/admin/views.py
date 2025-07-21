@@ -5,12 +5,10 @@ from crudadmin.admin_interface.model_view import PasswordTransformer
 from pydantic import BaseModel, Field
 
 from ..core.security import get_password_hash
-from ..models.post import Post
-from ..models.tier import Tier
-from ..models.user import User
-from ..schemas.post import PostUpdate
-from ..schemas.tier import TierCreate, TierUpdate
-from ..schemas.user import UserCreate, UserUpdate
+from ..models.users import Users
+
+# from ..schemas.conversations import ConversationCreate, ConversationUpdate
+from ..schemas.users import UserCreate, UserUpdate
 
 
 class PostCreateAdmin(BaseModel):
@@ -37,24 +35,17 @@ def register_admin_views(admin: CRUDAdmin) -> None:
         required_fields=["name", "username", "email"],
     )
 
+    # admin.add_view(
+    #     model=Conversations,
+    #     create_schema=ConversationCreate,
+    #     update_schema=ConversationUpdate,
+    #     allowed_actions={"view", "create", "update", "delete"},
+    # )
+
     admin.add_view(
-        model=User,
+        model=Users,
         create_schema=UserCreate,
         update_schema=UserUpdate,
         allowed_actions={"view", "create", "update"},
         password_transformer=password_transformer,
-    )
-
-    admin.add_view(
-        model=Tier,
-        create_schema=TierCreate,
-        update_schema=TierUpdate,
-        allowed_actions={"view", "create", "update", "delete"},
-    )
-
-    admin.add_view(
-        model=Post,
-        create_schema=PostCreateAdmin,
-        update_schema=PostUpdate,
-        allowed_actions={"view", "create", "update", "delete"},
     )

@@ -13,7 +13,7 @@ class HealthCheck(BaseModel):
 
 # -------------- mixins --------------
 class UUIDSchema(BaseModel):
-    uuid: uuid_pkg.UUID = Field(default_factory=uuid_pkg.uuid4)
+    id: uuid_pkg.UUID = Field(default_factory=uuid_pkg.uuid4)
 
 
 class TimestampSchema(BaseModel):
